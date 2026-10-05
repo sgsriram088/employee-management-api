@@ -1,39 +1,12 @@
-const express = require("express");
-const app = express();
-const port = 3000;
 
-let employees = [
-  {
-    id: "EMP001",
-    name: "Arun",
-    department: "IT",
-    role: "Tehnology Analyst",
-  },
-  {
-    id: "EMP002",
-    name: "Kumar",
-    department: "HR",
-    role: "Process Lead",
-  },
-  {
-    id: "EMP003",
-    name: "Sri",
-    department: "Management",
-    role: "Associate Consultant",
-  },
-];
+const employees = require("../data/employees");
+const requiredFields = ["name", "department", "role"];
 
-app.use(express.json());
 
-//intialize custom middleware
-app.use((req, res, next) => {
-  req.timestamp = new Date();
-  console.log(req.method, req.url);
-  next();
-});
 
 //get
-app.get("/api/employees", (req, res) => {
+
+const getEmployees = (req, res) => {
   console.log(req.query);
   let department = req.query.department;
   let name = req.query.name;
@@ -77,11 +50,11 @@ app.get("/api/employees", (req, res) => {
   const lastindex = startindex + limit;
   filteredEmployees = filteredEmployees.slice(startindex, lastindex);
   res.status(200).json(filteredEmployees);
-});
+};
+
 
 //post
-const requiredFields = ["name", "department", "role"];
-app.post("/api/employees", (req, res) => {
+const createEmployee = (req, res) => {
   console.log(req.body);
   const isValid = requiredFields.every((field) => {
     return (
@@ -106,10 +79,10 @@ app.post("/api/employees", (req, res) => {
   };
   employees.push(newEmployee);
   res.status(201).json(newEmployee);
-});
+};
 
 // get with Id
-app.get("/api/employees/:id", (req, res, next) => {
+const getEmployeeById = (req, res) => {
   console.log(req.timestamp);
   const userid = req.params.id;
   console.log(userid);
@@ -126,10 +99,10 @@ app.get("/api/employees/:id", (req, res, next) => {
     success: true,
     employee,
   });
-});
+};
 
 // put
-app.put("/api/employees/:id", (req, res) => {
+const updateEmployee = (req, res) => {
   // your implementation
 
   const getid = req.params.id;
@@ -158,41 +131,35 @@ app.put("/api/employees/:id", (req, res) => {
     employee.role = req.body.role;
     return res.status(200).json(employee);
   }
-});
+};
 
 //delete
-app.delete("/api/employees/:id", (req, res) => {
+const deleteEmployee = (req, res) => {
   const getid = req.params.id;
-  const employeeexists = employees.find((employee) => employee.id === getid);
-  if (!employeeexists) {
+
+  const employeeIndex = employees.findIndex(
+    (employee) => employee.id === getid
+  );
+
+  if (employeeIndex === -1) {
     return res.status(404).json({
       success: false,
       message: "Not Found",
     });
   }
-  employees = employees.filter((employee) => employee.id !== getid);
+
+  employees.splice(employeeIndex, 1);
+
   return res.status(200).json({
     success: true,
     message: "Employee deleted successfully",
   });
-});
+};
 
-// 404 Error Middleware
-app.use((req, res) => {
-  return res.status(404).json({
-    success: false,
-    message: "Route not found",
-  });
-});
-
-// error handling middleware
-app.use((err, req, res, next) => {
-  console.log(err.message);
-  return res.status(500).json({
-    success: false,
-    message: "Internal Server Error",
-  });
-});
-app.listen(port, () => {
-  console.log("log message");
-});
+module.exports = {
+  getEmployees,
+  getEmployeeById,
+  createEmployee,
+  updateEmployee,
+  deleteEmployee
+};
